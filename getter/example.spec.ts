@@ -62,12 +62,6 @@ function expandSearch(searchTerm: string, lastWord: Word): string | undefined {
   const lastWordStr = wordToString(lastWord);
   if (searchTerm.length < lastWordStr.length) {
     return searchTerm + cleanVowels(lastWordStr[searchTerm.length]);
-    // const next = lastWordStr[searchTerm.length];
-    // let seq = 0;
-    // while (next !== letters[seq]) seq++;
-    // seq++;
-    // if (seq < letters.length) return searchTerm + letters[seq];
-    // else return nextPermutation(searchTerm);
   }
   return searchTerm + letters[0];
 }
@@ -149,9 +143,6 @@ for (const letter of letters) {
         expect(prevSearches).not.toContain(searchTerm);
         const cache = FileUtils.readCache(letter, searchTermValue);
         if (cache !== undefined) {
-          // if (searchTerm?.startsWith("an")) {
-          //   console.log(searchTerm);
-          // }
           const numResults = cache.length;
           cache
             .filter((cachedWord) =>
