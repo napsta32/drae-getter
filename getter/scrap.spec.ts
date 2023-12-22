@@ -3,12 +3,13 @@ import { FileUtils } from "./FileUtils";
 import { Word } from "./model";
 
 const letters = "aábcdeéfghiíjklmnñoópqrstuúüvwxyz".split("");
-const vowelsVariations = {
+const letterVariations = {
   a: "á",
   e: "é",
   i: "í",
   o: "ó",
   u: "úü",
+  n: "ñ",
 };
 
 let maxResults = 0;
@@ -27,10 +28,10 @@ function cleanVowels(str: string): string {
   let cleanStr = "";
   for (const c of str) {
     let found = false;
-    for (const [vowel, variations] of Object.entries(vowelsVariations)) {
+    for (const [cleanLetter, variations] of Object.entries(letterVariations)) {
       if (variations.includes(c)) {
         found = true;
-        cleanStr += vowel;
+        cleanStr += cleanLetter;
         break;
       }
     }
