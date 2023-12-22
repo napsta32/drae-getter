@@ -1,0 +1,10 @@
+version: '3.0'
+
+services:
+  getter:
+    build: .
+    image: drae-getter
+    volumes:
+      - ./cache:/app/cache
+      - ./scrap:/app/scrap
+    command: npm run scrap

@@ -1,18 +1,21 @@
 import * as fs from "fs";
 import { Word } from "./example.spec";
+import { DirUtils } from "./DirUtils";
 
 let cache: object | undefined = undefined;
 
 export class FileUtils {
   static exportWords(letter: string, words: Word[]) {
+    DirUtils.createDirIfNeeded("scrap");
     fs.writeFileSync(
-      `./words-letter-${letter.charCodeAt(0)}.json`,
+      `./scrap/words-letter-${letter.charCodeAt(0)}.json`,
       JSON.stringify(words)
     );
   }
 
   static cacheFilePath(letter: string) {
-    return `./cache-letter-${letter.charCodeAt(0)}.json`;
+    DirUtils.createDirIfNeeded("cache");
+    return `./cache/cache-letter-${letter.charCodeAt(0)}.json`;
   }
 
   static saveCache(letter: string, searchTerm: string, results: Word[]) {
