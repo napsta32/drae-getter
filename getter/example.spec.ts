@@ -182,5 +182,4 @@ for (const letter of letters) {
     }
     FileUtils.exportWords(letter, words);
   });
-  break;
 }
