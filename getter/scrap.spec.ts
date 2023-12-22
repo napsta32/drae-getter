@@ -124,7 +124,7 @@ test("next to vowel", async () => {
   expect(nextPermutation("abalaz")).toBe("abalá");
 });
 
-for (const letter of "deéfü") {
+for (const letter of letters) {
   test(`scrap ${letter.toUpperCase()}`, async ({ page }, testInfo) => {
     const prevSearches: string[] = [];
     const words: Word[] = [];
