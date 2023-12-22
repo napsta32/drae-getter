@@ -1,10 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { FileUtils } from "./FileUtils";
-
-export type Word = {
-  eti: string;
-  text: string;
-};
+import { Word } from "./model";
 
 const letters = "aábcdeéfghiíjklmnñoópqrstuúüvwxyz".split("");
 const vowelsVariations = {
@@ -73,7 +69,8 @@ function nextSearch(
   prevNumResults: number
 ): string | undefined {
   // First just search the letter
-  if (words.length === 0) return letter;
+  if (prevSearch === "") return letter;
+  else if (words.length === 0) return undefined; // No results
   // Initialize max results with the first successful search results
   if (maxResults === 0) maxResults = prevNumResults;
 
@@ -127,7 +124,7 @@ test("next to vowel", async () => {
   expect(nextPermutation("abalaz")).toBe("abalá");
 });
 
-for (const letter of letters) {
+for (const letter of "deéfü") {
   test(`scrap ${letter.toUpperCase()}`, async ({ page }, testInfo) => {
     const prevSearches: string[] = [];
     const words: Word[] = [];

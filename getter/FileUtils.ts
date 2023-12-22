@@ -1,6 +1,6 @@
 import * as fs from "fs";
-import { Word } from "./example.spec";
 import { DirUtils } from "./DirUtils";
+import { Word } from "./model";
 
 let cache: object | undefined = undefined;
 

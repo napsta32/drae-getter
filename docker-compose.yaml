@@ -4,6 +4,8 @@ services:
   getter:
     build: .
     image: drae-getter
+    ports:
+      - 9323:9323
     volumes:
       - ./cache:/app/cache
       - ./scrap:/app/scrap
