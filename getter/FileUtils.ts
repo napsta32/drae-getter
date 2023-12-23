@@ -2,7 +2,7 @@ import * as fs from "fs";
 import { DirUtils } from "./DirUtils";
 import { Word } from "./model";
 
-let cache: object | undefined = undefined;
+let cache: { [letterCode: number]: object } = {};
 
 export class FileUtils {
   static exportWords(letter: string, words: Word[]) {
@@ -25,18 +25,22 @@ export class FileUtils {
       cacheData = JSON.parse(prevData.toString());
     }
     cacheData[searchTerm] = results;
-    if (cache !== undefined) cache[searchTerm] = results;
+    if (cache[letter.charCodeAt[0]] !== undefined)
+      cache[letter.charCodeAt[0]][searchTerm] = results;
     fs.writeFileSync(this.cacheFilePath(letter), JSON.stringify(cacheData));
   }
 
   static readCache(letter: string, searchTerm: string): Word[] | undefined {
     let cacheData = {};
-    if (cache === undefined && fs.existsSync(this.cacheFilePath(letter))) {
+    if (
+      cache[letter.charCodeAt[0]] === undefined &&
+      fs.existsSync(this.cacheFilePath(letter))
+    ) {
       const prevData = fs.readFileSync(this.cacheFilePath(letter));
       cacheData = JSON.parse(prevData.toString());
-      cache = cacheData;
-    } else if (cache !== undefined) {
-      cacheData = cache;
+      cache[letter.charCodeAt[0]] = cacheData;
+    } else if (cache[letter.charCodeAt[0]] !== undefined) {
+      cacheData = cache[letter.charCodeAt[0]];
     }
     return cacheData[searchTerm];
   }
