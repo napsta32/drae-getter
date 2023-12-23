@@ -18,6 +18,10 @@ export class FileUtils {
     return `./cache/cache-letter-${letter.charCodeAt(0)}.json`;
   }
 
+  static clearCache() {
+    cache = {};
+  }
+
   static saveCache(letter: string, searchTerm: string, results: Word[]) {
     let cacheData = {};
     if (fs.existsSync(this.cacheFilePath(letter))) {
