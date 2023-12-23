@@ -36,6 +36,7 @@ export class FileUtils {
       cache[letter.charCodeAt[0]] === undefined &&
       fs.existsSync(this.cacheFilePath(letter))
     ) {
+      console.log(`loading cache for letter code ${letter.charCodeAt(0)}`);
       const prevData = fs.readFileSync(this.cacheFilePath(letter));
       cacheData = JSON.parse(prevData.toString());
       cache[letter.charCodeAt[0]] = cacheData;
