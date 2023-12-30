@@ -106,8 +106,15 @@ function nextSearch(
       return commonSubstr;
     }
   } else {
-    // Search was unsuccessful. Get next permutation
-    return nextPermutation(prevSearch);
+    // At least one result was returned
+    if (maxResults / 2 < prevNumResults) {
+      // Few results returned
+      // All combinations were fulfilled
+      return nextPermutation(prevSearch);
+    } else {
+      // Too many results, need to check one by one
+      return expandSearch(prevSearch, words[words.length - prevNumResults]);
+    }
   }
   return undefined;
 }
