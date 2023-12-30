@@ -160,10 +160,14 @@ for (const letter of letters) {
             .forEach((cachedWord) => words.push(cachedWord));
           prevNumResults = numResults;
         } else {
-          console.log(searchTerm);
+          console.log(searchTermValue);
           const wordsCache: Word[] = [];
 
-          await page.goto(`/${searchTerm}?m=31`);
+          await page.goto(`/${searchTermValue}?m=31`);
+          expect(
+            page.getByText("Listado de lemas que empiezan por")
+          ).toBeVisible();
+          expect(page.getByText(searchTermValue)).toBeVisible();
           const resultLocator = page.locator('[data-acc="LISTA EMPIEZA POR"]');
           const numResults = await resultLocator.count();
           for (let i = 0; i < numResults; i++) {
@@ -180,6 +184,15 @@ for (const letter of letters) {
               wordsCache.push({ eti: nthResult, text: resultText });
             }
           }
+
+          if (wordsCache.length === 0) {
+            expect(
+              page.getByText(
+                "No se ha encontrado ningún lema con los criterios de búsqueda especificados."
+              )
+            ).toBeVisible();
+          }
+
           prevNumResults = wordsCache.length;
 
           FileUtils.saveCache(letter, searchTermValue, wordsCache);
