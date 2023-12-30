@@ -107,7 +107,7 @@ function nextSearch(
     }
   } else {
     // At least one result was returned
-    if (maxResults / 2 < prevNumResults) {
+    if (prevNumResults < maxResults / 2) {
       // Few results returned
       // All combinations were fulfilled
       return nextPermutation(prevSearch);
