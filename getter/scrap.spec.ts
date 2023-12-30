@@ -167,7 +167,7 @@ for (const letter of letters) {
           expect(
             page.getByText("Listado de lemas que empiezan por")
           ).toBeVisible();
-          expect(page.getByText(searchTermValue)).toBeVisible();
+          expect(page.getByText(searchTermValue).nth(0)).toBeVisible();
           const resultLocator = page.locator('[data-acc="LISTA EMPIEZA POR"]');
           const numResults = await resultLocator.count();
           for (let i = 0; i < numResults; i++) {
