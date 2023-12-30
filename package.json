@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "scrap": "npx playwright test scrap.spec.ts"
+    "scrap": "npx playwright test scrap.spec.ts",
+    "show-report": "npx playwright show-report"
   },
   "keywords": [],
   "author": "",

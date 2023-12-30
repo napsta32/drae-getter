@@ -4,9 +4,16 @@ services:
   getter:
     build: .
     image: drae-getter
-    ports:
-      - 9323:9323
     volumes:
       - ./cache:/app/cache
       - ./scrap:/app/scrap
+      - ./playwright-report:/app/playwright-report
     command: npm run scrap
+  reporter:
+    build: .
+    image: drae-getter
+    volumes:
+      - ./playwright-report:/app/playwright-report
+    ports:
+      - 80:9323
+    command: npm run show-report
