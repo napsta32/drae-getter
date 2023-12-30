@@ -23,6 +23,7 @@ export class FileUtils {
   }
 
   static saveCache(letter: string, searchTerm: string, results: Word[]) {
+    console.log(`Saving cache for "${searchTerm}"`);
     let cacheData = {};
     if (fs.existsSync(this.cacheFilePath(letter))) {
       const prevData = fs.readFileSync(this.cacheFilePath(letter));

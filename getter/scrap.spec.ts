@@ -148,24 +148,26 @@ for (const letter of letters) {
       searchTerm = nextSearch(letter, words, prevSearch, prevNumResults);
       if (searchTerm === undefined) break;
       const searchTermValue: string = searchTerm;
-      await test.step(`Search ${searchTerm}`, async () => {
+
+      if (prevSearches.includes(searchTermValue)) {
         expect(prevSearches).not.toContain(searchTerm);
-        const cache = FileUtils.readCache(letter, searchTermValue);
-        if (cache !== undefined) {
-          const numResults = cache.length;
-          cache
-            .filter((cachedWord) =>
-              isValidWord(cachedWord.eti, searchTermValue)
-            )
-            .forEach((cachedWord) => words.push(cachedWord));
-          prevNumResults = numResults;
-        } else {
+      }
+      const cache = FileUtils.readCache(letter, searchTermValue);
+      if (cache !== undefined) {
+        const numResults = cache.length;
+        cache
+          .filter((cachedWord) => isValidWord(cachedWord.eti, searchTermValue))
+          .forEach((cachedWord) => words.push(cachedWord));
+        prevNumResults = numResults;
+      } else {
+        await test.step(`Search ${searchTerm}`, async () => {
           console.log(searchTermValue);
           const wordsCache: Word[] = [];
 
           await page.goto(`/${searchTermValue}?m=31`);
           expect(
-            page.getByText("Listado de lemas que empiezan por")
+            page.getByText("Listado de lemas que empiezan por"),
+            `Label for search term "${searchTermValue}"`
           ).toBeVisible();
           expect(page.getByText(searchTermValue).nth(0)).toBeVisible();
           const resultLocator = page.locator('[data-acc="LISTA EMPIEZA POR"]');
@@ -189,15 +191,16 @@ for (const letter of letters) {
             expect(
               page.getByText(
                 "No se ha encontrado ningún lema con los criterios de búsqueda especificados."
-              )
+              ),
+              `No results error message for term "${searchTermValue}"`
             ).toBeVisible();
           }
 
           prevNumResults = wordsCache.length;
 
           FileUtils.saveCache(letter, searchTermValue, wordsCache);
-        }
-      });
+        });
+      }
 
       prevSearch = searchTerm;
       prevSearches.push(searchTerm);
