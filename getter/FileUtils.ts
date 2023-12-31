@@ -44,12 +44,6 @@ export class FileUtils {
       console.log(`loading cache for letter code ${letter.charCodeAt(0)}`);
       const prevData = fs.readFileSync(this.cacheFilePath(letter));
       cacheData = JSON.parse(prevData.toString());
-      // TODO: Remove this once data is clean
-      cacheData = Object.fromEntries(
-        Object.entries(cacheData).filter(
-          (val) => Array.isArray(val[1]) && val[1].length === 0
-        )
-      );
       cache[letter.charCodeAt[0]] = cacheData;
     } else if (cache[letter.charCodeAt[0]] !== undefined) {
       cacheData = cache[letter.charCodeAt[0]];
