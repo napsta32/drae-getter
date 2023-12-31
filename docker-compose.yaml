@@ -8,6 +8,8 @@ services:
       - ./cache:/app/cache
       - ./scrap:/app/scrap
       - ./playwright-report:/app/playwright-report
+    environment:
+      - CI=1
     command: npm run scrap
   reporter:
     build: .
