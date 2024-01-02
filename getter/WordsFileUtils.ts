@@ -4,7 +4,7 @@ import { Word } from "./model";
 
 let cache: { [letterCode: number]: object } = {};
 
-export class FileUtils {
+export class WordsFileUtils {
   static exportWords(letter: string, words: Word[]) {
     DirUtils.createDirIfNeeded("scrap");
     fs.writeFileSync(

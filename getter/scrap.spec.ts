@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { FileUtils } from "./FileUtils";
+import { WordsFileUtils } from "./WordsFileUtils";
 import { Word } from "./model";
 
 const letters = "aábcdeéfghiíjklmnñoópqrstuúüvwxyz".split("");
@@ -133,7 +133,7 @@ test("next to vowel", async () => {
 });
 
 test.beforeEach(async () => {
-  FileUtils.clearCache();
+  WordsFileUtils.clearCache();
 });
 
 for (const letter of letters) {
@@ -152,7 +152,7 @@ for (const letter of letters) {
       if (prevSearches.includes(searchTermValue)) {
         expect(prevSearches).not.toContain(searchTerm);
       }
-      const cache = FileUtils.readCache(letter, searchTermValue);
+      const cache = WordsFileUtils.readCache(letter, searchTermValue);
       if (cache !== undefined) {
         const numResults = cache.length;
         cache
@@ -198,13 +198,13 @@ for (const letter of letters) {
 
           prevNumResults = wordsCache.length;
 
-          FileUtils.saveCache(letter, searchTermValue, wordsCache);
+          WordsFileUtils.saveCache(letter, searchTermValue, wordsCache);
         });
       }
 
       prevSearch = searchTerm;
       prevSearches.push(searchTerm);
     }
-    FileUtils.exportWords(letter, words);
+    WordsFileUtils.exportWords(letter, words);
   });
 }
