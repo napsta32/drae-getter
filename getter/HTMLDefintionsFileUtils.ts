@@ -47,6 +47,7 @@ export class HTMLDefinitionsFileUtils {
 
   static listWordsWithHTMLCache(): Set<string> {
     const visitedWords = new Set<string>();
+    if (!fs.existsSync(SCRAP_DIR)) return visitedWords;
     fs.readdirSync(SCRAP_DIR)
       .filter((fileName) => fileName.startsWith(BUCKET_PREFIX))
       .map((fileName) => path.join(SCRAP_DIR, fileName))
