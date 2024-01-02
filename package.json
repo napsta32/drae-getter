@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "scrap": "npx playwright test scrap.spec.ts",
+    "scrap-definitions": "npx playwright test scrap-definitions.spec.ts",
     "show-report": "npx playwright show-report --host 0.0.0.0"
   },
   "keywords": [],

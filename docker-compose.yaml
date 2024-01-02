@@ -11,6 +11,16 @@ services:
     environment:
       - CI=1
     command: npm run scrap
+  definitions:
+    build: .
+    image: drae-getter
+    volumes:
+      - ./cache:/app/cache
+      - ./scrap:/app/scrap
+      - ./playwright-report:/app/playwright-report
+    environment:
+      - CI=1
+    command: npm run scrap-definitions
   reporter:
     build: .
     image: drae-getter
