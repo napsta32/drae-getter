@@ -1,14 +1,17 @@
 import * as fs from "fs";
+import * as path from "path";
 import { DirUtils } from "./DirUtils";
 import { Word } from "./model";
 
 let cache: { [letterCode: number]: object } = {};
 
+const LETTER_WORDS_PREFIX = "words-letter-";
+
 export class WordsFileUtils {
   static exportWords(letter: string, words: Word[]) {
     DirUtils.createDirIfNeeded("scrap");
     fs.writeFileSync(
-      `./scrap/words-letter-${letter.charCodeAt(0)}.json`,
+      `./scrap/${LETTER_WORDS_PREFIX}${letter.charCodeAt(0)}.json`,
       JSON.stringify(words)
     );
   }
@@ -49,5 +52,19 @@ export class WordsFileUtils {
       cacheData = cache[letter.charCodeAt[0]];
     }
     return cacheData[searchTerm];
+  }
+
+  static getWordsLabels(): Set<string> {
+    const labelSet = new Set<string>();
+    fs.readdirSync("./scrap")
+      .filter((fileName) => fileName.startsWith(LETTER_WORDS_PREFIX))
+      .forEach((fileName) => {
+        const wordsPath = path.join("./scrap", fileName);
+        const wordsData: Word[] = JSON.parse(
+          fs.readFileSync(wordsPath).toString()
+        );
+        wordsData.forEach((word) => labelSet.add(word.eti));
+      });
+    return labelSet;
   }
 }
