@@ -11,7 +11,7 @@ services:
     environment:
       - CI=1
     command: npm run scrap
-  definitions-1:
+  definitions:
     build: .
     image: drae-getter
     volumes:
@@ -20,27 +20,7 @@ services:
       - ./playwright-report:/app/playwright-report
     environment:
       - CI=1
-    command: npm run scrap-definitions -- --shard=1/3
-  definitions-2:
-    build: .
-    image: drae-getter
-    volumes:
-      - ./cache:/app/cache
-      - ./scrap:/app/scrap
-      - ./playwright-report:/app/playwright-report
-    environment:
-      - CI=1
-    command: npm run scrap-definitions -- --shard=2/3
-  definitions-3:
-    build: .
-    image: drae-getter
-    volumes:
-      - ./cache:/app/cache
-      - ./scrap:/app/scrap
-      - ./playwright-report:/app/playwright-report
-    environment:
-      - CI=1
-    command: npm run scrap-definitions -- --shard=3/3
+    command: npm run scrap-definitions
   reporter:
     build: .
     image: drae-getter
