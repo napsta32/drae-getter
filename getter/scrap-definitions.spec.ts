@@ -14,6 +14,11 @@ function scrapWordLabel(wordLabel: string) {
     await page.goto(getURL(wordLabel));
     const resultsLocator = page.locator('[id="resultados"]');
     expect(resultsLocator).toBeVisible();
+
+    // Clean logos
+    const shareDiv = page.locator("div.compartir");
+    await shareDiv.evaluate((node) => (node.innerHTML = ""));
+
     const resultsHTMLData = await resultsLocator.innerHTML({
       timeout: 30 * 1000,
     });
