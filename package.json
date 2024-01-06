@@ -15,6 +15,9 @@
     "@playwright/test": "^1.40.1",
     "@types/node": "^20.10.5",
     "@types/uuid": "^9.0.7",
+    "node-html-parser": "^6.1.12",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3",
     "uuid": "^9.0.1"
   },
   "dependencies": {
