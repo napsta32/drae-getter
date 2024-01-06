@@ -3,7 +3,8 @@ import * as path from "path";
 import { DirUtils } from "./DirUtils";
 import { Word } from "./model";
 
-let cache: { [letterCode: number]: object } = {};
+type LetterCache = { [searchTerm: string]: Word[] };
+let cache: { [letterCode: number]: LetterCache } = {};
 
 const LETTER_WORDS_PREFIX = "words-letter-";
 
@@ -27,29 +28,29 @@ export class WordsFileUtils {
 
   static saveCache(letter: string, searchTerm: string, results: Word[]) {
     console.log(`Saving cache for "${searchTerm}"`);
-    let cacheData = {};
+    let cacheData: LetterCache = {};
     if (fs.existsSync(this.cacheFilePath(letter))) {
       const prevData = fs.readFileSync(this.cacheFilePath(letter));
       cacheData = JSON.parse(prevData.toString());
     }
     cacheData[searchTerm] = results;
-    if (cache[letter.charCodeAt[0]] !== undefined)
-      cache[letter.charCodeAt[0]][searchTerm] = results;
+    if (cache[letter.charCodeAt(0)] !== undefined)
+      cache[letter.charCodeAt(0)][searchTerm] = results;
     fs.writeFileSync(this.cacheFilePath(letter), JSON.stringify(cacheData));
   }
 
   static readCache(letter: string, searchTerm: string): Word[] | undefined {
-    let cacheData = {};
+    let cacheData: LetterCache = {};
     if (
-      cache[letter.charCodeAt[0]] === undefined &&
+      cache[letter.charCodeAt(0)] === undefined &&
       fs.existsSync(this.cacheFilePath(letter))
     ) {
       console.log(`loading cache for letter code ${letter.charCodeAt(0)}`);
       const prevData = fs.readFileSync(this.cacheFilePath(letter));
       cacheData = JSON.parse(prevData.toString());
-      cache[letter.charCodeAt[0]] = cacheData;
-    } else if (cache[letter.charCodeAt[0]] !== undefined) {
-      cacheData = cache[letter.charCodeAt[0]];
+      cache[letter.charCodeAt(0)] = cacheData;
+    } else if (cache[letter.charCodeAt(0)] !== undefined) {
+      cacheData = cache[letter.charCodeAt(0)];
     }
     return cacheData[searchTerm];
   }

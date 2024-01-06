@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { HTMLDefinitionsFileUtils } from "./HTMLDefintionsFileUtils";
-import { WordsFileUtils } from "./WordsFileUtils";
+import { HTMLDefinitionsFileUtils } from "../utils/HTMLDefintionsFileUtils";
+import { WordsFileUtils } from "../utils/WordsFileUtils";
 
 const allWords = WordsFileUtils.getWordsLabels();
 const visitedWords = HTMLDefinitionsFileUtils.listWordsWithHTMLCache();

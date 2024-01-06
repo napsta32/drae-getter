@@ -45,18 +45,35 @@ export class HTMLDefinitionsFileUtils {
     fs.writeFileSync(bucketPath, JSON.stringify(bucketData));
   }
 
+  /**
+   * List words present in HTML definitions buckets
+   * @returns List of words
+   */
   static listWordsWithHTMLCache(): Set<string> {
     const visitedWords = new Set<string>();
-    if (!fs.existsSync(SCRAP_DIR)) return visitedWords;
-    fs.readdirSync(SCRAP_DIR)
-      .filter((fileName) => fileName.startsWith(BUCKET_PREFIX))
-      .map((fileName) => path.join(SCRAP_DIR, fileName))
-      .forEach((filePath) => {
-        const bucketData: WordHTMLDefinition[] = JSON.parse(
-          fs.readFileSync(filePath).toString()
-        );
-        bucketData.forEach((wordCache) => visitedWords.add(wordCache.word));
-      });
+    for (const wordCache of this.getHTMLDefinitions()) {
+      visitedWords.add(wordCache.word);
+    }
     return visitedWords;
+  }
+
+  /**
+   * Iterate through all the HTML definitions buckets and get all definitions
+   * @returns Generator of html definitions
+   */
+  static *getHTMLDefinitions(): Generator<WordHTMLDefinition, void> {
+    if (!fs.existsSync(SCRAP_DIR)) return;
+    const bucketFiles = fs
+      .readdirSync(SCRAP_DIR)
+      .filter((fileName) => fileName.startsWith(BUCKET_PREFIX))
+      .map((fileName) => path.join(SCRAP_DIR, fileName));
+    for (const filePath of bucketFiles) {
+      const bucketData: WordHTMLDefinition[] = JSON.parse(
+        fs.readFileSync(filePath).toString()
+      );
+      for (const wordCache of bucketData) {
+        yield wordCache;
+      }
+    }
   }
 }

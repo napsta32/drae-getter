@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { WordsFileUtils } from "./WordsFileUtils";
-import { Word } from "./model";
+import { WordsFileUtils } from "../utils/WordsFileUtils";
+import { Word } from "../utils/model";
 
 const letters = "aábcdeéfghiíjklmnñoópqrstuúüvwxyz".split("");
 const letterVariations = {
