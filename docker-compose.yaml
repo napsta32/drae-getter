@@ -1,7 +1,7 @@
 version: '3.0'
 
 services:
-  getter:
+  scrap-words:
     build: .
     image: drae-getter
     volumes:
@@ -11,7 +11,7 @@ services:
     environment:
       - CI=1
     command: npm run scrap
-  definitions:
+  scrap-definitions:
     build: .
     image: drae-getter
     volumes:
@@ -21,6 +21,16 @@ services:
     environment:
       - CI=1
     command: npm run scrap-definitions
+  parse-definitions:
+    build: .
+    image: drae-getter
+    volumes:
+      - ./cache:/app/cache
+      - ./scrap:/app/scrap
+      - ./playwright-report:/app/playwright-report
+    environment:
+      - CI=1
+    command: npm run parse-definitions
   reporter:
     build: .
     image: drae-getter

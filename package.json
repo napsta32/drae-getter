@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "scrap": "npx playwright test scrap.spec.ts",
+    "scrap-words": "npx playwright test scrap.spec.ts",
     "scrap-definitions": "npx playwright test scrap-definitions.spec.ts",
-    "show-report": "npx playwright show-report --host 0.0.0.0"
+    "show-report": "npx playwright show-report --host 0.0.0.0",
+    "parse-definitions": "npx ts-node ./parser/parse-html-definitions.ts"
   },
   "keywords": [],
   "author": "",
