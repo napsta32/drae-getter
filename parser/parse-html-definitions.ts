@@ -21,6 +21,7 @@ const articleContentTemplate = new HTMLTemplateFSM<{ word: string }>(
         ["title", "class"]
       ),
       nextStates: [
+        "article-content-l2",
         "article-content-n1",
         "article-content-n2",
         "article-content-n4",
@@ -42,8 +43,11 @@ const articleContentTemplate = new HTMLTemplateFSM<{ word: string }>(
         new SkipTemplate()
       ),
       nextStates: [
+        "article-content-k5", // Se usa en frase...
+        "article-content-k6", // Se usa en frase...
         "article-content-n2",
         "article-content-n3",
+        "article-content-n5", // Escrito con...
         "article-content-j",
       ],
     },
@@ -63,6 +67,8 @@ const articleContentTemplate = new HTMLTemplateFSM<{ word: string }>(
         "article-content-j2",
         "article-content-k5",
         "article-content-k6",
+        "article-content-l2", // Vease
+        "article-content-l3", // Otra frase
         "article-content-b",
       ],
     },
@@ -105,6 +111,17 @@ const articleContentTemplate = new HTMLTemplateFSM<{ word: string }>(
         new SkipTemplate()
       ),
       nextStates: ["article-content-j"],
+    },
+    {
+      stateId: "article-content-l2",
+      template: new HTMLTagTemplate(
+        "article-content-l2",
+        "p",
+        // Vease otra palabra
+        { class: "l2" },
+        new SkipTemplate()
+      ),
+      nextStates: [],
     },
     {
       stateId: "article-content-j",
@@ -239,7 +256,14 @@ const articleContentTemplate = new HTMLTemplateFSM<{ word: string }>(
         (key, value) => key === "id",
         ["class", "id"]
       ),
-      nextStates: ["article-content-k-m"],
+      nextStates: [
+        "article-content-k-n1",
+        "article-content-k-n2",
+        "article-content-k-n4",
+        "article-content-k-l2",
+        "article-content-k-m",
+        "article-content-k5", // Bug? Missing definition, skip and go to the next phrase
+      ],
     },
     {
       stateId: "article-content-k6",
@@ -256,6 +280,7 @@ const articleContentTemplate = new HTMLTemplateFSM<{ word: string }>(
       nextStates: [
         "article-content-k-n1",
         "article-content-k-n2",
+        "article-content-k-n4",
         "article-content-k-l2",
         "article-content-k-m",
       ],
@@ -269,7 +294,11 @@ const articleContentTemplate = new HTMLTemplateFSM<{ word: string }>(
         { class: "n1" },
         new SkipTemplate()
       ),
-      nextStates: ["article-content-k-m"],
+      nextStates: [
+        "article-content-k-n3",
+        "article-content-k-n5",
+        "article-content-k-m",
+      ],
     },
     {
       stateId: "article-content-k-n2",
@@ -278,6 +307,39 @@ const articleContentTemplate = new HTMLTemplateFSM<{ word: string }>(
         "p",
         // Origen de la frase
         { class: "n2" },
+        new SkipTemplate()
+      ),
+      nextStates: ["article-content-k-m"],
+    },
+    {
+      stateId: "article-content-k-n3",
+      template: new HTMLTagTemplate(
+        "article-content-k-n3",
+        "p",
+        // De origen expresivo
+        { class: "n3" },
+        new SkipTemplate()
+      ),
+      nextStates: ["article-content-k-m"],
+    },
+    {
+      stateId: "article-content-k-n4",
+      template: new HTMLTagTemplate(
+        "article-content-k-n4",
+        "p",
+        // Otra forma de escribir la frase (ver k6 por ejemplo)
+        { class: "n4" },
+        new SkipTemplate()
+      ),
+      nextStates: ["article-content-k-m"],
+    },
+    {
+      stateId: "article-content-k-n5",
+      template: new HTMLTagTemplate(
+        "article-content-k-n5",
+        "p",
+        // Como se escribe dicha frase (ver k6 por ejemplo)
+        { class: "n5" },
         new SkipTemplate()
       ),
       nextStates: ["article-content-k-m"],
