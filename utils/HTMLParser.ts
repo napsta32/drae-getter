@@ -9,11 +9,11 @@ function shouldSkip(node: Node) {
       (node as TextNode).textContent.trim().length === 0) ||
     (node.nodeType === NodeType.ELEMENT_NODE &&
       // Some divs are empty
-      (node as HTMLElement).innerHTML.trim().length === 0)
+      (node as HTMLElement).innerText.trim().length === 0)
   );
 }
 
-export abstract class HTMLTemplate {
+export abstract class HTMLTemplate<Metadata = object> {
   /**
    * List of all rule ids to check that they are unique
    */
@@ -37,7 +37,7 @@ export abstract class HTMLTemplate {
    * @param node Node to validate
    * @param metadata Metadata that helps the parsing process
    */
-  abstract parse(node: Node, metadata?: object): void;
+  abstract parse(node: Node, metadata: Metadata): void;
 
   /**
    * Check if node is valid.
@@ -48,37 +48,37 @@ export abstract class HTMLTemplate {
   abstract see(node: Node): boolean;
 }
 
-export class HTMLTemplateGraphNode {
+export class HTMLTemplateGraphNode<Metadata> {
   readonly template: HTMLTemplate;
-  readonly parseFn: (node: Node, metadata: object) => object;
-  readonly nextNodes: HTMLTemplateGraphNode[];
+  readonly parseFn: (node: Node, metadata: Metadata) => object;
+  readonly nextNodes: HTMLTemplateGraphNode<Metadata>[];
 
   constructor(
     template: HTMLTemplate,
-    parseFn?: (node: Node, stack: object) => object,
-    nextNodes: HTMLTemplateGraphNode[] = []
+    parseFn?: (node: Node, metadata: Metadata) => object,
+    nextNodes: HTMLTemplateGraphNode<Metadata>[] = []
   ) {
     this.template = template;
     this.nextNodes = nextNodes;
     this.parseFn = parseFn
       ? parseFn
-      : (_: Node, metadata: object) => {
+      : (node: Node, metadata: Metadata) => {
           // Leave metadata untouched by default
-          return metadata;
+          return metadata as object;
         };
   }
 
-  addNextNode(nextNode: HTMLTemplateGraphNode) {
+  addNextNode(nextNode: HTMLTemplateGraphNode<Metadata>) {
     this.nextNodes.push(nextNode);
   }
 }
 
-export type HTMLTemplateGraphState = {
+export type HTMLTemplateGraphState<Metadata> = {
   isRoot?: boolean;
   stateId: string;
   template: HTMLTemplate;
   nextStates: string[];
-  parseFn?: (node: Node, metadata: object) => object;
+  parseFn?: (node: Node, metadata: Metadata) => object;
 };
 /**
  * Template that checks children of a specific HTMLElement
@@ -86,27 +86,27 @@ export type HTMLTemplateGraphState = {
  * sequentially and the first child is expected to be any of the root nodes.
  * Next nodes can be what nodes can follow the initial node.
  */
-export class HTMLTemplateFSM extends HTMLTemplate {
-  readonly rootNodes: HTMLTemplateGraphNode[];
+export class HTMLTemplateFSM<Metadata> extends HTMLTemplate<Metadata> {
+  readonly rootNodes: HTMLTemplateGraphNode<Metadata>[];
   readonly metadata: object;
 
-  constructor(ruleId: string, states: HTMLTemplateGraphState[]) {
+  constructor(ruleId: string, states: HTMLTemplateGraphState<Metadata>[]) {
     super(ruleId);
     this.metadata = {};
 
     const rootStates = states.filter((state) => state.isRoot);
 
     const mappedStates = Object.fromEntries(
-      states.map<[string, HTMLTemplateGraphState]>((state) => [
+      states.map<[string, HTMLTemplateGraphState<Metadata>]>((state) => [
         state.stateId,
         state,
       ])
     );
 
     let mappedNodes = Object.fromEntries(
-      states.map<[string, HTMLTemplateGraphNode]>((state) => [
+      states.map<[string, HTMLTemplateGraphNode<Metadata>]>((state) => [
         state.stateId,
-        new HTMLTemplateGraphNode(state.template, state.parseFn),
+        new HTMLTemplateGraphNode<Metadata>(state.template, state.parseFn),
       ])
     );
     // traverse Graph tree to link nodes
@@ -128,7 +128,7 @@ export class HTMLTemplateFSM extends HTMLTemplate {
     this.rootNodes = rootStates.map((root) => mappedNodes[root.stateId]);
   }
 
-  parse(node: Node, metadata: object = {}): void {
+  parse(node: Node, metadata: Metadata): void {
     let validNodes = [...this.rootNodes];
     for (const child of node.childNodes) {
       if (shouldSkip(child)) {
@@ -158,6 +158,29 @@ export class HTMLTemplateFSM extends HTMLTemplate {
     // Graph doesn't need to be seen unless we start nesting graphs which doesn't
     // make sense. A single graph should cover all possibilities.
     return true;
+  }
+}
+
+export class AnyHTMLTemplate extends HTMLTemplate {
+  readonly templates: HTMLTemplate[];
+
+  constructor(ruleId: string, templates: HTMLTemplate[]) {
+    super(ruleId);
+    this.templates = templates;
+  }
+
+  parse(node: Node, metadata: object): void {
+    for (const template of this.templates) {
+      if (template.see(node)) return template.parse(node, metadata);
+    }
+    throw `${this.ruleId}: Missing template for:\n${node.toString()}`;
+  }
+
+  see(node: Node): boolean {
+    for (const template of this.templates) {
+      if (template.see(node)) return true;
+    }
+    return false;
   }
 }
 
