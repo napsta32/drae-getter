@@ -85,6 +85,6 @@ const template = new HTMLTemplateFSM("root", [
   for (const wordCache of HTMLDefinitionsFileUtils.getHTMLDefinitions()) {
     const root = parse(wordCache.htmlData);
     // AssertUtils.equals(root.childNodes.length, 1);
-    template.validate(root);
+    template.parse(root);
   }
 })();

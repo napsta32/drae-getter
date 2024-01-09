@@ -33,11 +33,11 @@ export abstract class HTMLTemplate {
   }
 
   /**
-   * Validate that node matches template.
-   * Exit on failure
+   * Parse node data and exit by throwing a failure if it cannot be parsed.
    * @param node Node to validate
+   * @param metadata Metadata that helps the parsing process
    */
-  abstract validate(node: Node): void;
+  abstract parse(node: Node, metadata?: object): void;
 
   /**
    * Check if node is valid.
@@ -50,11 +50,22 @@ export abstract class HTMLTemplate {
 
 export class HTMLTemplateGraphNode {
   readonly template: HTMLTemplate;
+  readonly parseFn: (node: Node, metadata: object) => object;
   readonly nextNodes: HTMLTemplateGraphNode[];
 
-  constructor(template: HTMLTemplate, nextNodes: HTMLTemplateGraphNode[] = []) {
+  constructor(
+    template: HTMLTemplate,
+    parseFn?: (node: Node, stack: object) => object,
+    nextNodes: HTMLTemplateGraphNode[] = []
+  ) {
     this.template = template;
     this.nextNodes = nextNodes;
+    this.parseFn = parseFn
+      ? parseFn
+      : (_: Node, metadata: object) => {
+          // Leave metadata untouched by default
+          return metadata;
+        };
   }
 
   addNextNode(nextNode: HTMLTemplateGraphNode) {
@@ -67,6 +78,7 @@ export type HTMLTemplateGraphState = {
   stateId: string;
   template: HTMLTemplate;
   nextStates: string[];
+  parseFn?: (node: Node, metadata: object) => object;
 };
 /**
  * Template that checks children of a specific HTMLElement
@@ -76,9 +88,11 @@ export type HTMLTemplateGraphState = {
  */
 export class HTMLTemplateFSM extends HTMLTemplate {
   readonly rootNodes: HTMLTemplateGraphNode[];
+  readonly metadata: object;
 
   constructor(ruleId: string, states: HTMLTemplateGraphState[]) {
     super(ruleId);
+    this.metadata = {};
 
     const rootStates = states.filter((state) => state.isRoot);
 
@@ -92,7 +106,7 @@ export class HTMLTemplateFSM extends HTMLTemplate {
     let mappedNodes = Object.fromEntries(
       states.map<[string, HTMLTemplateGraphNode]>((state) => [
         state.stateId,
-        new HTMLTemplateGraphNode(state.template),
+        new HTMLTemplateGraphNode(state.template, state.parseFn),
       ])
     );
     // traverse Graph tree to link nodes
@@ -114,12 +128,10 @@ export class HTMLTemplateFSM extends HTMLTemplate {
     this.rootNodes = rootStates.map((root) => mappedNodes[root.stateId]);
   }
 
-  validate(node: Node): void {
+  parse(node: Node, metadata: object = {}): void {
     let validNodes = [...this.rootNodes];
-    let prevChild: any = "";
     for (const child of node.childNodes) {
       if (shouldSkip(child)) {
-        prevChild = child;
         continue;
       }
 
@@ -127,7 +139,8 @@ export class HTMLTemplateFSM extends HTMLTemplate {
       for (const node of validNodes) {
         if (node.template.see(child)) {
           foundNode = true;
-          node.template.validate(child);
+          const updatedMetadata = node.parseFn(child, metadata);
+          node.template.parse(child, updatedMetadata);
           validNodes = node.nextNodes;
           break;
         }
@@ -139,91 +152,11 @@ export class HTMLTemplateFSM extends HTMLTemplate {
           .toString()
           .substring(0, 500)}`;
       }
-      prevChild = child;
     }
   }
   see(_: Node): boolean {
     // Graph doesn't need to be seen unless we start nesting graphs which doesn't
     // make sense. A single graph should cover all possibilities.
-    return true;
-  }
-}
-
-/**
- * @deprecated Use HTMLTemplateFSM instead
- */
-export class AnyOrder extends HTMLTemplate {
-  readonly children: HTMLTemplate[];
-  readonly optionalChildren: HTMLTemplate[];
-
-  /**
-   * AnyOrder of children. Children must be unique.
-   * @param children Expected children of node
-   */
-  constructor(
-    ruleId: string,
-    children: HTMLTemplate[],
-    optionalChildren: HTMLTemplate[] = []
-  ) {
-    super(ruleId);
-    this.children = children;
-    this.optionalChildren = optionalChildren;
-  }
-
-  validate(node: Node) {
-    const visited = Array(this.children.length).fill(false);
-    const visitedOptional = Array(this.optionalChildren.length).fill(false);
-
-    for (const child of node.childNodes) {
-      if (shouldSkip(child)) {
-        continue;
-      }
-      let foundTemplate = false;
-      for (let i = 0; i < this.children.length; i++) {
-        if (visited[i]) continue;
-        if (this.children[i].see(child)) {
-          this.children[i].validate(child);
-          foundTemplate = true;
-          visited[i] = true;
-          break;
-        }
-      }
-      if (!foundTemplate) {
-        for (let i = 0; i < this.optionalChildren.length; i++) {
-          if (visitedOptional[i]) continue;
-          if (this.optionalChildren[i].see(child)) {
-            this.children[i].validate(child);
-            foundTemplate = true;
-            visitedOptional[i] = true;
-            break;
-          }
-        }
-      }
-
-      // If there is no available template this node cannot match anything
-      if (!foundTemplate) {
-        throw `${
-          this.ruleId
-        }: Missing template for node:\n${child.toString()}\n\n${node.toString()}`;
-      }
-    }
-
-    // All nodes should be visited for this to work
-    if (visited.some((val) => val === false)) {
-      const extraChildren = visited
-        .map<[boolean, number]>((val, index) => [val, index])
-        .filter(([val, _]) => val === false)
-        .map(([_, index]) => this.children[index].ruleId);
-      throw `${this.ruleId}: Expected ${
-        this.children.length
-      } nodes but received ${
-        this.children.length - extraChildren.length
-      }. Missing nodes: ${extraChildren.join(", ")}`;
-    }
-  }
-
-  see(_: Node) {
-    // This template checks any type of node
     return true;
   }
 }
@@ -268,7 +201,7 @@ export class HTMLTagTemplate extends HTMLTemplate {
     }
   }
 
-  validate(node: Node): void {
+  parse(node: Node, metadata: object = {}): void {
     const element = node as HTMLElement;
 
     const visitedAttributes: string[] = [];
@@ -297,7 +230,7 @@ export class HTMLTagTemplate extends HTMLTemplate {
       } attributes:\n${missingAttributes.join(", ")}`;
     }
 
-    return this.childrenValidator.validate(node);
+    return this.childrenValidator.parse(node, metadata);
   }
   see(node: Node): boolean {
     if (node.nodeType !== NodeType.ELEMENT_NODE) return false;
@@ -351,10 +284,10 @@ export class SkipTemplate extends HTMLTemplate {
     super(`void-template-${SkipTemplate.voidTemplateCount++}`);
   }
 
-  validate(_: Node): void {
+  parse(node: Node, metadata: object = {}): void {
     // Void template won't validate anything
   }
-  see(_: Node): boolean {
+  see(node: Node): boolean {
     // Void template won't validate anything
     return true;
   }
