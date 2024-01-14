@@ -444,7 +444,7 @@ export class HTMLTableTemplate<
 export class HTMLTagTemplate extends HTMLNodeTemplate {
   readonly tagName: string;
   readonly attributes: { [key: string]: string };
-  readonly childrenValidator: HTMLTemplate;
+  readonly childrenValidator: HTMLChildrenTemplate;
   readonly defaultAttributeValidator:
     | ((key: string, value: string) => void)
     | undefined;
@@ -454,7 +454,7 @@ export class HTMLTagTemplate extends HTMLNodeTemplate {
     ruleId: string,
     tagName: string,
     attributes: { [key: string]: string },
-    childrenValidator: HTMLTemplate = new SkipTemplate(),
+    childrenValidator: HTMLChildrenTemplate = new SkipTemplate(),
     defaultAttributeValidator?: (key: string, value: string) => void,
     keyAttributes?: string[]
   ) {
@@ -581,7 +581,7 @@ export class HTMLSingleChildTempalte extends HTMLChildrenTemplate {
   }
 }
 
-export class SkipTemplate extends HTMLTemplate {
+export class SkipTemplate extends HTMLChildrenTemplate {
   private static voidTemplateCount: number = 0;
 
   constructor() {
