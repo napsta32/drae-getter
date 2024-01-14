@@ -1,6 +1,9 @@
 import { HTMLElement, parse } from "node-html-parser";
 import { HTMLDefinitionsFileUtils } from "../utils/HTMLDefintionsFileUtils";
 import {
+  AnyHTMLTemplate,
+  HTMLSingleChildTempalte,
+  HTMLTableTemplate,
   HTMLTagTemplate,
   HTMLTemplateFSM,
   SkipTemplate,
@@ -381,6 +384,418 @@ const articleContentTemplate = new HTMLTemplateFSM<{ word: string }>(
   ]
 );
 
+const conjugacionTableTemplate1 = new HTMLTableTemplate("conjugacion-table1", [
+  {
+    separator: ["", "", "", "Formas no personales"],
+  },
+  {
+    header: ["", "", "", "Infinitivo", "Gerundio"],
+    mappedHeaders: [undefined, undefined, undefined, "infinitivo", "gerundio"],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 1,
+  },
+  {
+    header: ["", "", "", "Infinitivo compuesto", "Gerundio compuesto"],
+    mappedHeaders: [
+      undefined,
+      undefined,
+      undefined,
+      "infinitivoCompuesto",
+      "gerundioCompuesto",
+    ],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 1,
+  },
+  {
+    header: ["", "", "", "Participio"],
+    mappedHeaders: [undefined, undefined, undefined, "participio"],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 1,
+  },
+  {
+    separator: ["", "", "", "Indicativo"],
+  },
+  {
+    header: [
+      "Número",
+      "Personas del discurso",
+      "Pronombres personales",
+      "Presente",
+      "Pretérito perfecto compuesto / Antepresente",
+    ],
+    mappedHeaders: [
+      "numero",
+      "persona",
+      "pronombre",
+      "presente",
+      "preteritoPerfectoCompuesto",
+    ],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+  {
+    header: [
+      "",
+      "",
+      "",
+      "Pretérito imperfecto / Copretérito",
+      "Pretérito pluscuamperfecto / Antecopretérito",
+    ],
+    mappedHeaders: [
+      "numero",
+      "persona",
+      "pronombre",
+      "preteritoImperfecto",
+      "preteritoPluscuamperfecto",
+    ],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+  {
+    header: [
+      "",
+      "",
+      "",
+      "Pretérito perfecto simple / Pretérito",
+      "Pretérito anterior / Antepretérito",
+    ],
+    mappedHeaders: [
+      "numero",
+      "persona",
+      "pronombre",
+      "preteritoPerfectoSimple",
+      "preteritoAnterior",
+    ],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+  {
+    header: [
+      "",
+      "",
+      "",
+      "Futuro simple / Futuro",
+      "Futuro compuesto / Antefuturo",
+    ],
+    mappedHeaders: [
+      "numero",
+      "persona",
+      "pronombre",
+      "futuroSimple",
+      "futuroCompuesto",
+    ],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+  {
+    header: [
+      "",
+      "",
+      "",
+      "Condicional simple / Pospretérito",
+      "Condicional compuesto / Antepospretérito",
+    ],
+    mappedHeaders: [
+      "numero",
+      "persona",
+      "pronombre",
+      "condicionalSimple",
+      "condicionalCompuesto",
+    ],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+  {
+    separator: ["", "", "", "Subjuntivo"],
+  },
+  {
+    header: [
+      "Número",
+      "Personas del discurso",
+      "Pronombres personales",
+      "Presente",
+      "Pretérito perfecto compuesto / Antepresente",
+    ],
+    mappedHeaders: [
+      "numero",
+      "persona",
+      "pronombre",
+      "presente",
+      "preteritoPerfectoCompuesto",
+    ],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+  {
+    header: ["", "", "", "Pretérito imperfecto / Pretérito"],
+    mappedHeaders: ["numero", "persona", "pronombre", "preteritoImperfecto"],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+  {
+    header: ["", "", "", "Pretérito pluscuamperfecto / Antepretérito"],
+    mappedHeaders: [
+      "numero",
+      "persona",
+      "pronombre",
+      "preteritoPluscuamperfecto",
+    ],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+  {
+    header: [
+      "",
+      "",
+      "",
+      "Futuro simple / Futuro",
+      "Futuro compuesto / Antefuturo",
+    ],
+    mappedHeaders: [
+      "numero",
+      "persona",
+      "pronombre",
+      "futuroSimple",
+      "futuroCompuesto",
+    ],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+  {
+    separator: ["", "", "", "Imperativo"],
+  },
+  {
+    header: [
+      "Número",
+      "Personas del discurso",
+      "Pronombres personales",
+      "",
+      "",
+    ],
+    mappedHeaders: ["numero", "persona", "pronombre", "imperativo"],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+]);
+
+const conjugacionTableTemplate2 = new HTMLTableTemplate("conjugacion-table2", [
+  {
+    separator: ["", "", "", "Formas no personales"],
+  },
+  {
+    header: ["", "", "", "Infinitivo", "Gerundio"],
+    mappedHeaders: [undefined, undefined, undefined, "infinitivo", "gerundio"],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+  {
+    header: ["", "", "", "Infinitivo compuesto", "Gerundio compuesto"],
+    mappedHeaders: [
+      undefined,
+      undefined,
+      undefined,
+      "infinitivoCompuesto",
+      "gerundioCompuesto",
+    ],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+  {
+    header: ["", "", "", "Participio"],
+    mappedHeaders: [undefined, undefined, undefined, "participio"],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+  {
+    separator: ["", "", "", "Indicativo"],
+  },
+  {
+    header: [
+      "Número",
+      "Personas del discurso",
+      "Pronombres personales",
+      "Presente",
+      "Pretérito perfecto compuesto / Antepresente",
+    ],
+    mappedHeaders: [
+      "numero",
+      "persona",
+      "pronombre",
+      "presente",
+      "preteritoPerfectoCompuesto",
+    ],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+  {
+    header: [
+      "",
+      "",
+      "",
+      "Pretérito imperfecto / Copretérito",
+      "Pretérito pluscuamperfecto / Antecopretérito",
+    ],
+    mappedHeaders: [
+      "numero",
+      "persona",
+      "pronombre",
+      "preteritoImperfecto",
+      "preteritoPluscuamperfecto",
+    ],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+  {
+    header: [
+      "",
+      "",
+      "",
+      "Pretérito perfecto simple / Pretérito",
+      "Pretérito anterior / Antepretérito",
+    ],
+    mappedHeaders: [
+      "numero",
+      "persona",
+      "pronombre",
+      "preteritoPerfectoSimple",
+      "preteritoAnterior",
+    ],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+  {
+    header: [
+      "",
+      "",
+      "",
+      "Futuro simple / Futuro",
+      "Futuro compuesto / Antefuturo",
+    ],
+    mappedHeaders: [
+      "numero",
+      "persona",
+      "pronombre",
+      "futuroSimple",
+      "futuroCompuesto",
+    ],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+  {
+    header: [
+      "",
+      "",
+      "",
+      "Condicional simple / Pospretérito",
+      "Condicional compuesto / Antepospretérito",
+    ],
+    mappedHeaders: [
+      "numero",
+      "persona",
+      "pronombre",
+      "condicionalSimple",
+      "condicionalCompuesto",
+    ],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+  {
+    separator: ["", "", "", "Subjuntivo"],
+  },
+  {
+    header: [
+      "Número",
+      "Personas del discurso",
+      "Pronombres personales",
+      "Presente",
+      "Pretérito perfecto compuesto / Antepresente",
+    ],
+    mappedHeaders: [
+      "numero",
+      "persona",
+      "pronombre",
+      "presente",
+      "preteritoPerfectoCompuesto",
+    ],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+  {
+    header: ["", "", "", "Pretérito imperfecto / Pretérito"],
+    mappedHeaders: ["numero", "persona", "pronombre", "preteritoImperfecto"],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+  {
+    header: ["", "", "", "Pretérito pluscuamperfecto / Antepretérito"],
+    mappedHeaders: [
+      "numero",
+      "persona",
+      "pronombre",
+      "preteritoPluscuamperfecto",
+    ],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+  {
+    header: [
+      "",
+      "",
+      "",
+      "Futuro simple / Futuro",
+      "Futuro compuesto / Antefuturo",
+    ],
+    mappedHeaders: [
+      "numero",
+      "persona",
+      "pronombre",
+      "futuroSimple",
+      "futuroCompuesto",
+    ],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 8,
+  },
+  // No tiene imperativo
+]);
+
+// Solo tiene infinitivo y gerundio
+const conjugacionTableTemplate3 = new HTMLTableTemplate("conjugacion-table3", [
+  {
+    separator: ["", "", "", "Formas no personales"],
+  },
+  {
+    header: ["", "", "", "Infinitivo", "Gerundio"],
+    mappedHeaders: [undefined, undefined, undefined, "infinitivo", "gerundio"],
+    parseRowValues: (rowNode, rowValues, metadata) => {},
+    maxRows: 1,
+  },
+]);
+
+const conjugacionContentTemplate = new HTMLTagTemplate(
+  "conjugacion-article",
+  "article",
+  {},
+  new HTMLTemplateFSM("conjugacion-article-content", [
+    {
+      isRoot: true,
+      stateId: "conjugacion-header",
+      template: new HTMLTagTemplate("conjugacion-header", "header", {}),
+      nextStates: ["conjugacion-table"],
+    },
+    {
+      stateId: "conjugacion-table",
+      template: new AnyHTMLTemplate("conjugacion-tables", [
+        conjugacionTableTemplate1,
+        conjugacionTableTemplate2,
+        conjugacionTableTemplate3,
+      ]),
+      nextStates: [],
+    },
+  ]),
+  (key, value) => key === "id",
+  ["id"]
+);
+
 const template = new HTMLTemplateFSM<{ word: string }>("root", [
   {
     isRoot: true,
@@ -409,7 +824,7 @@ const template = new HTMLTemplateFSM<{ word: string }>("root", [
       "div-conjugacion",
       "div",
       { id: "conjugacion" },
-      new SkipTemplate()
+      new HTMLSingleChildTempalte(conjugacionContentTemplate)
     ),
     nextStates: ["article", "conjugacion2", "sin-ant", "otras", "derechos"],
   },

@@ -48,13 +48,24 @@ export abstract class HTMLTemplate<Metadata = object> {
   abstract see(node: Node): boolean;
 }
 
+export abstract class HTMLChildrenTemplate<
+  Metadata = object
+> extends HTMLTemplate<Metadata> {
+  __type: "HTMLChildrenTemplate" = "HTMLChildrenTemplate";
+}
+export abstract class HTMLNodeTemplate<
+  Metadata = object
+> extends HTMLTemplate<Metadata> {
+  __type: "HTMLNodeTemplate" = "HTMLNodeTemplate";
+}
+
 export class HTMLTemplateGraphNode<Metadata> {
-  readonly template: HTMLTemplate;
+  readonly template: HTMLNodeTemplate;
   readonly parseFn: (node: Node, metadata: Metadata) => object;
   readonly nextNodes: HTMLTemplateGraphNode<Metadata>[];
 
   constructor(
-    template: HTMLTemplate,
+    template: HTMLNodeTemplate,
     parseFn?: (node: Node, metadata: Metadata) => object,
     nextNodes: HTMLTemplateGraphNode<Metadata>[] = []
   ) {
@@ -76,7 +87,7 @@ export class HTMLTemplateGraphNode<Metadata> {
 export type HTMLTemplateGraphState<Metadata> = {
   isRoot?: boolean;
   stateId: string;
-  template: HTMLTemplate;
+  template: HTMLNodeTemplate;
   nextStates: string[];
   parseFn?: (node: Node, metadata: Metadata) => object;
 };
@@ -86,7 +97,7 @@ export type HTMLTemplateGraphState<Metadata> = {
  * sequentially and the first child is expected to be any of the root nodes.
  * Next nodes can be what nodes can follow the initial node.
  */
-export class HTMLTemplateFSM<Metadata> extends HTMLTemplate<Metadata> {
+export class HTMLTemplateFSM<Metadata> extends HTMLChildrenTemplate<Metadata> {
   readonly rootNodes: HTMLTemplateGraphNode<Metadata>[];
   readonly metadata: object;
 
@@ -146,11 +157,9 @@ export class HTMLTemplateFSM<Metadata> extends HTMLTemplate<Metadata> {
         }
       }
       if (!foundNode) {
-        throw `${
-          this.ruleId
-        }: Missing template for element:\n${child.toString()}\n\n${node
+        throw `${this.ruleId}: Missing template for element:\n${child
           .toString()
-          .substring(0, 500)}`;
+          .substring(0, 500)}\n\n${node.toString().substring(0, 500)}`;
       }
     }
   }
@@ -161,10 +170,10 @@ export class HTMLTemplateFSM<Metadata> extends HTMLTemplate<Metadata> {
   }
 }
 
-export class AnyHTMLTemplate extends HTMLTemplate {
-  readonly templates: HTMLTemplate[];
+export class AnyHTMLTemplate extends HTMLNodeTemplate {
+  readonly templates: HTMLNodeTemplate[];
 
-  constructor(ruleId: string, templates: HTMLTemplate[]) {
+  constructor(ruleId: string, templates: HTMLNodeTemplate[]) {
     super(ruleId);
     this.templates = templates;
   }
@@ -184,7 +193,255 @@ export class AnyHTMLTemplate extends HTMLTemplate {
   }
 }
 
-export class HTMLTagTemplate extends HTMLTemplate {
+export class HTMLTableSeparator<Metadata = object> {
+  readonly tableRuleId: string;
+  readonly columnContents: (HTMLChildrenTemplate<Metadata> | string)[];
+  readonly __type: "HTMLTableSeparator" = "HTMLTableSeparator";
+
+  constructor(
+    tableRuleId: string,
+    columnContents: (HTMLChildrenTemplate<Metadata> | string)[]
+  ) {
+    this.tableRuleId = tableRuleId;
+    this.columnContents = columnContents;
+  }
+
+  see(row: HTMLElement): boolean {
+    if (row.childNodes.length !== this.columnContents.length) {
+      return false;
+    }
+    for (let i = 0; i < this.columnContents.length; i++) {
+      const template = this.columnContents[i];
+      const child = row.childNodes[i];
+
+      if (typeof template === "string") {
+        if (child.innerText !== template) {
+          return false;
+        }
+      } else {
+        if (!template.see(child)) return false;
+      }
+    }
+    return true;
+  }
+
+  parseHeaderContents(rowId: number, row: HTMLElement, metadata: Metadata) {
+    if (row.childNodes.length !== this.columnContents.length) {
+      throw `${this.tableRuleId}-${rowId}: Expected ${
+        this.columnContents.length
+      } columns but received ${row.childNodes.length}\n${row
+        .toString()
+        .substring(0, 500)}`;
+    }
+
+    for (let i = 0; i < this.columnContents.length; i++) {
+      const template = this.columnContents[i];
+      const child = row.childNodes[i];
+
+      if (typeof template === "string") {
+        if (child.innerText !== template) {
+          throw `${
+            this.tableRuleId
+          }-${rowId}: Expected header with value '${template}' but found '${
+            child.innerText
+          }' instead\n${row.toString().substring(0, 500)}`;
+        }
+      } else {
+        template.parse(child, metadata);
+      }
+    }
+  }
+}
+
+export class HTMLHeadedTable<HeaderKey extends string, Metadata = object> {
+  readonly mappedHeaders: (HeaderKey | undefined)[];
+  readonly header: HTMLTableSeparator<Metadata>;
+  readonly parseRowValues: (
+    rowNode: HTMLElement,
+    rowValues: { [key in HeaderKey]: Node },
+    metadata: Metadata
+  ) => void;
+  readonly maxRows: number;
+  readonly __type: "HTMLHeadedTable" = "HTMLHeadedTable";
+
+  constructor(
+    tableRuleId: string,
+    mappedHeaders: (HeaderKey | undefined)[],
+    headerContents: (HTMLChildrenTemplate<Metadata> | string)[],
+    parseRowValues: (
+      rowNode: HTMLElement,
+      rowValues: { [key in HeaderKey]: Node },
+      metadata: Metadata
+    ) => void,
+    maxRows: number = 100000000 // Assume this is infinity
+  ) {
+    this.mappedHeaders = mappedHeaders;
+    this.header = new HTMLTableSeparator<Metadata>(tableRuleId, headerContents);
+    this.parseRowValues = parseRowValues;
+    this.maxRows = maxRows;
+  }
+
+  see(row: HTMLElement): boolean {
+    return this.header.see(row);
+  }
+
+  parseHeaderContents(rowId: number, row: HTMLElement, metadata: Metadata) {
+    return this.header.parseHeaderContents(rowId, row, metadata);
+  }
+}
+
+export type TableComponent<Metadata> =
+  | {
+      separator: (HTMLChildrenTemplate<Metadata> | string)[];
+    }
+  | {
+      header: (HTMLChildrenTemplate<Metadata> | string)[];
+      mappedHeaders: (string | undefined)[];
+      parseRowValues: (
+        rowNode: HTMLElement,
+        rowValues: { [key in string]: Node },
+        metadata: Metadata
+      ) => void;
+      maxRows?: number;
+    };
+
+export class HTMLTableTemplate<
+  Metadata = object
+> extends HTMLNodeTemplate<Metadata> {
+  readonly content: (
+    | HTMLTableSeparator<Metadata>
+    | HTMLHeadedTable<any, Metadata>
+  )[];
+
+  constructor(ruleId: string, components: TableComponent<Metadata>[]) {
+    super(ruleId);
+    this.content = components.map((comp) => {
+      if ("separator" in comp) {
+        return new HTMLTableSeparator(ruleId, comp.separator);
+      } else {
+        return new HTMLHeadedTable(
+          ruleId,
+          comp.mappedHeaders,
+          comp.header,
+          comp.parseRowValues,
+          comp.maxRows
+        );
+      }
+    });
+  }
+
+  see(node: Node): boolean {
+    if (node.nodeType !== NodeType.ELEMENT_NODE) return false;
+    const elem = node as HTMLElement;
+
+    if (elem.tagName.toUpperCase() !== "TABLE") return false;
+    if (elem.childNodes.length !== 1) return false;
+    if (elem.childNodes[0].nodeType !== NodeType.ELEMENT_NODE) return false;
+    const body = elem.childNodes[0] as HTMLElement;
+    if (body.tagName.toUpperCase() !== "TBODY") return false;
+
+    let i = 0,
+      j = 0;
+    while (i < this.content.length && j < body.childNodes.length) {
+      let child = body.childNodes[j];
+      if (child.nodeType !== NodeType.ELEMENT_NODE) return false;
+      const childElem = child as HTMLElement;
+      if (!this.content[i].see(childElem)) return false;
+      const component = this.content[i];
+      i++;
+      j++;
+      if (
+        component.__type === "HTMLHeadedTable" &&
+        i < this.content.length &&
+        j < body.childNodes.length
+      ) {
+        while (j < body.childNodes.length) {
+          child = body.childNodes[j];
+          if (child.nodeType !== NodeType.ELEMENT_NODE) return false; // This should be an error
+          const childElem = child as HTMLElement;
+          if (this.content[i].see(childElem)) break;
+          j++;
+        }
+      }
+    }
+
+    // Ignore what happens if j < body.childNodes.length
+    // Expect the parser to solve this
+    return i === this.content.length;
+  }
+
+  private extractRowContents(elem: HTMLElement): string[] {
+    return elem.childNodes.map((child) => child.innerText);
+  }
+
+  parse(node: Node, metadata: Metadata): void {
+    const body = (node as HTMLElement).childNodes[0] as HTMLElement;
+
+    let i = 0,
+      j = 0;
+    while (i < this.content.length && j < body.childNodes.length) {
+      let child = body.childNodes[j];
+      const childElem = child as HTMLElement;
+      this.content[i].parseHeaderContents(j, childElem, metadata);
+      const component = this.content[i];
+      i++;
+      j++;
+      if (
+        component.__type === "HTMLHeadedTable" &&
+        j < body.childNodes.length
+      ) {
+        let rowsLeft = component.maxRows;
+        while (j < body.childNodes.length) {
+          child = body.childNodes[j];
+          const childElem = child as HTMLElement;
+          if (i < this.content.length && this.content[i].see(childElem)) break;
+          else {
+            const rowContents = this.extractRowContents(childElem);
+            if (rowsLeft <= 0) {
+              throw `${
+                this.ruleId
+              }-${j}: Missing table components to parse:\n${body.childNodes[j]
+                .toString()
+                .substring(0, 500)}`;
+            }
+            if (rowContents.length !== component.mappedHeaders.length) {
+              throw `${this.ruleId}-${j}: Expected ${
+                component.mappedHeaders.length
+              } columns but found ${rowContents.length} instead\n${childElem
+                .toString()
+                .substring(0, 500)}`;
+            }
+            component.parseRowValues(
+              childElem,
+              Object.fromEntries(
+                rowContents
+                  .map((cellData, colId) => {
+                    return [component.mappedHeaders[colId], cellData];
+                  })
+                  .filter((entry) => entry[0] !== undefined)
+              ),
+              metadata
+            );
+            rowsLeft--;
+          }
+          j++;
+        }
+      }
+    }
+
+    // Ignore what happens if j < body.childNodes.length
+    // Expect the parser to solve this
+    if (j < body.childNodes.length) {
+      throw `${
+        this.ruleId
+      }: Missing table components to parse:\n${body.childNodes[j]
+        .toString()
+        .substring(0, 500)}`;
+    }
+  }
+}
+
+export class HTMLTagTemplate extends HTMLNodeTemplate {
   readonly tagName: string;
   readonly attributes: { [key: string]: string };
   readonly childrenValidator: HTMLTemplate;
@@ -297,6 +554,30 @@ export class HTMLTagTemplate extends HTMLTemplate {
     }
 
     return this.childrenValidator.see(node);
+  }
+}
+
+export class HTMLSingleChildTempalte extends HTMLChildrenTemplate {
+  childTemplate: HTMLNodeTemplate;
+
+  constructor(childTemplate: HTMLNodeTemplate) {
+    super(childTemplate.ruleId + "-sctwrapper");
+    this.childTemplate = childTemplate;
+  }
+
+  parse(node: Node, metadata: object): void {
+    const validChildren = node.childNodes.filter((child) => !shouldSkip(child));
+    if (validChildren.length !== 1) {
+      throw `${this.ruleId}: Expected 1 child but node contains ${
+        validChildren.length
+      } children\n${node.toString().substring(0, 500)}`;
+    }
+    this.childTemplate.parse(validChildren[0], metadata);
+  }
+  see(node: Node): boolean {
+    const validChildren = node.childNodes.filter((child) => !shouldSkip(child));
+    if (validChildren.length !== 1) return false;
+    return this.childTemplate.see(validChildren[0]);
   }
 }
 
