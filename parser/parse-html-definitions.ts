@@ -1,4 +1,4 @@
-import { HTMLElement, parse } from "node-html-parser";
+import { HTMLElement, parse, Node } from "node-html-parser";
 import { HTMLDefinitionsFileUtils } from "../utils/HTMLDefintionsFileUtils";
 import {
   AnyHTMLTemplate,
@@ -384,6 +384,144 @@ const articleContentTemplate = new HTMLTemplateFSM<{ word: string }>(
   ]
 );
 
+function gestionarFormasNoPersonales(
+  rowNode: HTMLElement,
+  rowValues: { [key: string]: Node },
+  metadata: { word: string }
+) {
+  const formasValidas = [
+    "infinitivo",
+    "gerundio",
+    "infinitivoCompuesto",
+    "gerundioCompuesto",
+    "participio",
+  ];
+  Object.keys(rowValues).forEach((formaVerbal) => {
+    if (!formasValidas.includes(formaVerbal)) {
+      throw `${metadata.word}: Forma no personal invalida: ${formaVerbal}`;
+    }
+  });
+  Object.entries(rowValues).forEach(([formaVerbal, verboConjugado]) => {
+    if (
+      !verboConjugado ||
+      !verboConjugado.innerText ||
+      verboConjugado.innerText.trim().length === 0
+    ) {
+      throw `${
+        metadata.word
+      }: No hay verbo conjugado para ${formaVerbal}\n${verboConjugado.toString()}`;
+    }
+  });
+}
+
+function validarFormaPersonal(
+  formasValidas: string[],
+  rowValues: { [key: string]: Node },
+  metadata: { word: string }
+) {
+  const propiedadesPersona = ["numero", "persona", "pronombre"];
+  const pronombresValidos = [
+    "yo",
+    "tú / vos",
+    "usted",
+    "él, ella",
+    "nosotros, nosotras",
+    "vosotros, vosotras",
+    "ustedes",
+    "ellos, ellas",
+  ];
+
+  const propiedadesValidas = [...formasValidas, ...propiedadesPersona];
+  Object.keys(rowValues).forEach((prop) => {
+    if (!propiedadesValidas.includes(prop)) {
+      throw `${metadata.word}: Propiedad invalida ${prop} para conjugacion personal`;
+    }
+  });
+  if (rowValues.numero.innerText.trim().length !== 0) {
+    throw `${
+      metadata.word
+    }: Valor inesperado para numero "${rowValues.number.innerText.trim()}"`;
+  }
+
+  if (rowValues.persona.innerText.trim().length !== 0) {
+    throw `${
+      metadata.word
+    }: Valor inesperado para persona "${rowValues.persona.innerText.trim()}"`;
+  }
+  if (!pronombresValidos.includes(rowValues.pronombre.innerText.trim())) {
+    if (rowValues.pronombre.innerText.trim().length === 0) {
+      // We expect to see at least numero and persona
+      if (
+        !["Singular", "Plural"].includes(
+          (rowValues.numero as HTMLElement).attributes["data-g"]
+        )
+      ) {
+        throw `${metadata.word}: Numero inesperado ${
+          (rowValues.numero as HTMLElement).attributes["data-g"]
+        }`;
+      }
+      if (
+        !["Tercera"].includes(
+          (rowValues.persona as HTMLElement).attributes["data-g"]
+        )
+      ) {
+        throw `${metadata.word}: Persona inesperada ${
+          (rowValues.persona as HTMLElement).attributes["data-g"]
+        }`;
+      }
+    } else {
+      throw `${
+        metadata.word
+      }: Pronombre invalido '${rowValues.pronombre.innerText.trim()}'`;
+    }
+  }
+}
+
+function gestionarIndicativo(
+  rowNode: HTMLElement,
+  rowValues: { [key: string]: Node },
+  metadata: { word: string }
+) {
+  const formasValidas = [
+    "presente",
+    "preteritoPerfectoCompuesto",
+    "preteritoImperfecto",
+    "preteritoPluscuamperfecto",
+    "preteritoPerfectoSimple",
+    "preteritoAnterior",
+    "futuroSimple",
+    "futuroCompuesto",
+    "condicionalSimple",
+    "condicionalCompuesto",
+  ];
+  validarFormaPersonal(formasValidas, rowValues, metadata);
+}
+
+function gestionarSubjuntivo(
+  rowNode: HTMLElement,
+  rowValues: { [key: string]: Node },
+  metadata: { word: string }
+) {
+  const formasValidas = [
+    "presente",
+    "preteritoPerfectoCompuesto",
+    "preteritoImperfecto",
+    "preteritoPluscuamperfecto",
+    "futuroSimple",
+    "futuroCompuesto",
+  ];
+  validarFormaPersonal(formasValidas, rowValues, metadata);
+}
+
+function gestionarImperativo(
+  rowNode: HTMLElement,
+  rowValues: { [key: string]: Node },
+  metadata: { word: string }
+) {
+  const formasValidas = ["imperativo"];
+  validarFormaPersonal(formasValidas, rowValues, metadata);
+}
+
 const conjugacionTableTemplate1 = new HTMLTableTemplate("conjugacion-table1", [
   {
     separator: ["", "", "", "Formas no personales"],
@@ -391,7 +529,7 @@ const conjugacionTableTemplate1 = new HTMLTableTemplate("conjugacion-table1", [
   {
     header: ["", "", "", "Infinitivo", "Gerundio"],
     mappedHeaders: [undefined, undefined, undefined, "infinitivo", "gerundio"],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarFormasNoPersonales,
     maxRows: 1,
   },
   {
@@ -403,13 +541,13 @@ const conjugacionTableTemplate1 = new HTMLTableTemplate("conjugacion-table1", [
       "infinitivoCompuesto",
       "gerundioCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarFormasNoPersonales,
     maxRows: 1,
   },
   {
     header: ["", "", "", "Participio"],
     mappedHeaders: [undefined, undefined, undefined, "participio"],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarFormasNoPersonales,
     maxRows: 1,
   },
   {
@@ -430,7 +568,7 @@ const conjugacionTableTemplate1 = new HTMLTableTemplate("conjugacion-table1", [
       "presente",
       "preteritoPerfectoCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -448,7 +586,7 @@ const conjugacionTableTemplate1 = new HTMLTableTemplate("conjugacion-table1", [
       "preteritoImperfecto",
       "preteritoPluscuamperfecto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -466,7 +604,7 @@ const conjugacionTableTemplate1 = new HTMLTableTemplate("conjugacion-table1", [
       "preteritoPerfectoSimple",
       "preteritoAnterior",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -484,7 +622,7 @@ const conjugacionTableTemplate1 = new HTMLTableTemplate("conjugacion-table1", [
       "futuroSimple",
       "futuroCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -502,7 +640,7 @@ const conjugacionTableTemplate1 = new HTMLTableTemplate("conjugacion-table1", [
       "condicionalSimple",
       "condicionalCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -523,13 +661,13 @@ const conjugacionTableTemplate1 = new HTMLTableTemplate("conjugacion-table1", [
       "presente",
       "preteritoPerfectoCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
   {
     header: ["", "", "", "Pretérito imperfecto / Pretérito"],
     mappedHeaders: ["numero", "persona", "pronombre", "preteritoImperfecto"],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
   {
@@ -540,7 +678,7 @@ const conjugacionTableTemplate1 = new HTMLTableTemplate("conjugacion-table1", [
       "pronombre",
       "preteritoPluscuamperfecto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
   {
@@ -558,7 +696,7 @@ const conjugacionTableTemplate1 = new HTMLTableTemplate("conjugacion-table1", [
       "futuroSimple",
       "futuroCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
   {
@@ -573,7 +711,7 @@ const conjugacionTableTemplate1 = new HTMLTableTemplate("conjugacion-table1", [
       "",
     ],
     mappedHeaders: ["numero", "persona", "pronombre", "imperativo"],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarImperativo,
     maxRows: 8,
   },
 ]);
@@ -586,7 +724,7 @@ const conjugacionTableTemplate2 = new HTMLTableTemplate("conjugacion-table2", [
   {
     header: ["", "", "", "Infinitivo", "Gerundio"],
     mappedHeaders: [undefined, undefined, undefined, "infinitivo", "gerundio"],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarFormasNoPersonales,
     maxRows: 8,
   },
   {
@@ -598,13 +736,13 @@ const conjugacionTableTemplate2 = new HTMLTableTemplate("conjugacion-table2", [
       "infinitivoCompuesto",
       "gerundioCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarFormasNoPersonales,
     maxRows: 8,
   },
   {
     header: ["", "", "", "Participio"],
     mappedHeaders: [undefined, undefined, undefined, "participio"],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarFormasNoPersonales,
     maxRows: 8,
   },
   {
@@ -625,7 +763,7 @@ const conjugacionTableTemplate2 = new HTMLTableTemplate("conjugacion-table2", [
       "presente",
       "preteritoPerfectoCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -643,7 +781,7 @@ const conjugacionTableTemplate2 = new HTMLTableTemplate("conjugacion-table2", [
       "preteritoImperfecto",
       "preteritoPluscuamperfecto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -661,7 +799,7 @@ const conjugacionTableTemplate2 = new HTMLTableTemplate("conjugacion-table2", [
       "preteritoPerfectoSimple",
       "preteritoAnterior",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -679,7 +817,7 @@ const conjugacionTableTemplate2 = new HTMLTableTemplate("conjugacion-table2", [
       "futuroSimple",
       "futuroCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -697,7 +835,7 @@ const conjugacionTableTemplate2 = new HTMLTableTemplate("conjugacion-table2", [
       "condicionalSimple",
       "condicionalCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -718,13 +856,13 @@ const conjugacionTableTemplate2 = new HTMLTableTemplate("conjugacion-table2", [
       "presente",
       "preteritoPerfectoCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
   {
     header: ["", "", "", "Pretérito imperfecto / Pretérito"],
     mappedHeaders: ["numero", "persona", "pronombre", "preteritoImperfecto"],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
   {
@@ -735,7 +873,7 @@ const conjugacionTableTemplate2 = new HTMLTableTemplate("conjugacion-table2", [
       "pronombre",
       "preteritoPluscuamperfecto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
   {
@@ -753,7 +891,7 @@ const conjugacionTableTemplate2 = new HTMLTableTemplate("conjugacion-table2", [
       "futuroSimple",
       "futuroCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
   // No tiene imperativo
@@ -767,7 +905,7 @@ const conjugacionTableTemplate3 = new HTMLTableTemplate("conjugacion-table3", [
   {
     header: ["", "", "", "Infinitivo", ""],
     mappedHeaders: [undefined, undefined, undefined, "infinitivo"],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarFormasNoPersonales,
     maxRows: 1,
   },
   {
@@ -779,13 +917,13 @@ const conjugacionTableTemplate3 = new HTMLTableTemplate("conjugacion-table3", [
       "infinitivoCompuesto",
       "gerundioCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarFormasNoPersonales,
     maxRows: 1,
   },
   {
     header: ["", "", "", "Participio"],
     mappedHeaders: [undefined, undefined, undefined, "participio"],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarFormasNoPersonales,
     maxRows: 1,
   },
   {
@@ -806,7 +944,7 @@ const conjugacionTableTemplate3 = new HTMLTableTemplate("conjugacion-table3", [
       "presente",
       "preteritoPerfectoCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -824,7 +962,7 @@ const conjugacionTableTemplate3 = new HTMLTableTemplate("conjugacion-table3", [
       "preteritoImperfecto",
       "preteritoPluscuamperfecto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -842,7 +980,7 @@ const conjugacionTableTemplate3 = new HTMLTableTemplate("conjugacion-table3", [
       "preteritoPerfectoSimple",
       "preteritoAnterior",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -860,7 +998,7 @@ const conjugacionTableTemplate3 = new HTMLTableTemplate("conjugacion-table3", [
       "futuroSimple",
       "futuroCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -878,7 +1016,7 @@ const conjugacionTableTemplate3 = new HTMLTableTemplate("conjugacion-table3", [
       "condicionalSimple",
       "condicionalCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -899,13 +1037,13 @@ const conjugacionTableTemplate3 = new HTMLTableTemplate("conjugacion-table3", [
       "presente",
       "preteritoPerfectoCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
   {
     header: ["", "", "", "Pretérito imperfecto / Pretérito"],
     mappedHeaders: ["numero", "persona", "pronombre", "preteritoImperfecto"],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
   {
@@ -916,7 +1054,7 @@ const conjugacionTableTemplate3 = new HTMLTableTemplate("conjugacion-table3", [
       "pronombre",
       "preteritoPluscuamperfecto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
   {
@@ -934,9 +1072,10 @@ const conjugacionTableTemplate3 = new HTMLTableTemplate("conjugacion-table3", [
       "futuroSimple",
       "futuroCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
+  // No tiene imperativo
 ]);
 
 // Sin gerundio ni imperativo ni participio
@@ -947,7 +1086,7 @@ const conjugacionTableTemplate4 = new HTMLTableTemplate("conjugacion-table4", [
   {
     header: ["", "", "", "Infinitivo", ""],
     mappedHeaders: [undefined, undefined, undefined, "infinitivo"],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarFormasNoPersonales,
     maxRows: 1,
   },
   {
@@ -959,7 +1098,7 @@ const conjugacionTableTemplate4 = new HTMLTableTemplate("conjugacion-table4", [
       "infinitivoCompuesto",
       "gerundioCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarFormasNoPersonales,
     maxRows: 1,
   },
   {
@@ -980,7 +1119,7 @@ const conjugacionTableTemplate4 = new HTMLTableTemplate("conjugacion-table4", [
       "presente",
       "preteritoPerfectoCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -998,7 +1137,7 @@ const conjugacionTableTemplate4 = new HTMLTableTemplate("conjugacion-table4", [
       "preteritoImperfecto",
       "preteritoPluscuamperfecto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -1016,7 +1155,7 @@ const conjugacionTableTemplate4 = new HTMLTableTemplate("conjugacion-table4", [
       "preteritoPerfectoSimple",
       "preteritoAnterior",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -1034,7 +1173,7 @@ const conjugacionTableTemplate4 = new HTMLTableTemplate("conjugacion-table4", [
       "futuroSimple",
       "futuroCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -1052,7 +1191,7 @@ const conjugacionTableTemplate4 = new HTMLTableTemplate("conjugacion-table4", [
       "condicionalSimple",
       "condicionalCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -1073,13 +1212,13 @@ const conjugacionTableTemplate4 = new HTMLTableTemplate("conjugacion-table4", [
       "presente",
       "preteritoPerfectoCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
   {
     header: ["", "", "", "Pretérito imperfecto / Pretérito"],
     mappedHeaders: ["numero", "persona", "pronombre", "preteritoImperfecto"],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
   {
@@ -1090,7 +1229,7 @@ const conjugacionTableTemplate4 = new HTMLTableTemplate("conjugacion-table4", [
       "pronombre",
       "preteritoPluscuamperfecto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
   {
@@ -1108,7 +1247,7 @@ const conjugacionTableTemplate4 = new HTMLTableTemplate("conjugacion-table4", [
       "futuroSimple",
       "futuroCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
 ]);
@@ -1121,7 +1260,7 @@ const conjugacionTableTemplate5 = new HTMLTableTemplate("conjugacion-table5", [
   {
     header: ["", "", "", "Infinitivo", ""],
     mappedHeaders: [undefined, undefined, undefined, "infinitivo"],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarFormasNoPersonales,
     maxRows: 1,
   },
   {
@@ -1133,13 +1272,13 @@ const conjugacionTableTemplate5 = new HTMLTableTemplate("conjugacion-table5", [
       "infinitivoCompuesto",
       "gerundioCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarFormasNoPersonales,
     maxRows: 1,
   },
   {
     header: ["", "", "", "Participio"],
     mappedHeaders: [undefined, undefined, undefined, "participio"],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarFormasNoPersonales,
     maxRows: 1,
   },
   {
@@ -1160,7 +1299,7 @@ const conjugacionTableTemplate5 = new HTMLTableTemplate("conjugacion-table5", [
       "presente",
       "preteritoPerfectoCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -1178,7 +1317,7 @@ const conjugacionTableTemplate5 = new HTMLTableTemplate("conjugacion-table5", [
       "preteritoImperfecto",
       "preteritoPluscuamperfecto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -1196,7 +1335,7 @@ const conjugacionTableTemplate5 = new HTMLTableTemplate("conjugacion-table5", [
       "preteritoPerfectoSimple",
       "preteritoAnterior",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -1214,7 +1353,7 @@ const conjugacionTableTemplate5 = new HTMLTableTemplate("conjugacion-table5", [
       "futuroSimple",
       "futuroCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -1232,7 +1371,7 @@ const conjugacionTableTemplate5 = new HTMLTableTemplate("conjugacion-table5", [
       "condicionalSimple",
       "condicionalCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -1253,7 +1392,7 @@ const conjugacionTableTemplate5 = new HTMLTableTemplate("conjugacion-table5", [
       "presente",
       "preteritoPerfectoCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
   {
@@ -1264,7 +1403,7 @@ const conjugacionTableTemplate5 = new HTMLTableTemplate("conjugacion-table5", [
       "pronombre",
       "preteritoPluscuamperfecto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
   {
@@ -1282,7 +1421,7 @@ const conjugacionTableTemplate5 = new HTMLTableTemplate("conjugacion-table5", [
       "futuroSimple",
       "futuroCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
   {
@@ -1297,7 +1436,7 @@ const conjugacionTableTemplate5 = new HTMLTableTemplate("conjugacion-table5", [
       "",
     ],
     mappedHeaders: ["numero", "persona", "pronombre", "imperativo"],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarImperativo,
     maxRows: 8,
   },
 ]);
@@ -1310,7 +1449,7 @@ const conjugacionTableTemplate6 = new HTMLTableTemplate("conjugacion-table6", [
   {
     header: ["", "", "", "Infinitivo", ""],
     mappedHeaders: [undefined, undefined, undefined, "infinitivo"],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarFormasNoPersonales,
     maxRows: 1,
   },
   {
@@ -1322,13 +1461,13 @@ const conjugacionTableTemplate6 = new HTMLTableTemplate("conjugacion-table6", [
       "infinitivoCompuesto",
       "gerundioCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarFormasNoPersonales,
     maxRows: 1,
   },
   {
     header: ["", "", "", "Participio"],
     mappedHeaders: [undefined, undefined, undefined, "participio"],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarFormasNoPersonales,
     maxRows: 1,
   },
   {
@@ -1349,7 +1488,7 @@ const conjugacionTableTemplate6 = new HTMLTableTemplate("conjugacion-table6", [
       "presente",
       "preteritoPerfectoCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -1367,7 +1506,7 @@ const conjugacionTableTemplate6 = new HTMLTableTemplate("conjugacion-table6", [
       "preteritoImperfecto",
       "preteritoPluscuamperfecto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -1385,7 +1524,7 @@ const conjugacionTableTemplate6 = new HTMLTableTemplate("conjugacion-table6", [
       "preteritoPerfectoSimple",
       "preteritoAnterior",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -1403,7 +1542,7 @@ const conjugacionTableTemplate6 = new HTMLTableTemplate("conjugacion-table6", [
       "futuroSimple",
       "futuroCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -1421,7 +1560,7 @@ const conjugacionTableTemplate6 = new HTMLTableTemplate("conjugacion-table6", [
       "condicionalSimple",
       "condicionalCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarIndicativo,
     maxRows: 8,
   },
   {
@@ -1442,7 +1581,7 @@ const conjugacionTableTemplate6 = new HTMLTableTemplate("conjugacion-table6", [
       "presente",
       "preteritoPerfectoCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
   {
@@ -1453,7 +1592,7 @@ const conjugacionTableTemplate6 = new HTMLTableTemplate("conjugacion-table6", [
       "pronombre",
       "preteritoPluscuamperfecto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
   {
@@ -1471,7 +1610,7 @@ const conjugacionTableTemplate6 = new HTMLTableTemplate("conjugacion-table6", [
       "futuroSimple",
       "futuroCompuesto",
     ],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarSubjuntivo,
     maxRows: 8,
   },
 ]);
@@ -1484,7 +1623,7 @@ const conjugacionTableTemplate7 = new HTMLTableTemplate("conjugacion-table7", [
   {
     header: ["", "", "", "Infinitivo", ""], // Gerundio space is present, this is a bug
     mappedHeaders: [undefined, undefined, undefined, "infinitivo"],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarFormasNoPersonales,
     maxRows: 1,
   },
   {
@@ -1499,7 +1638,7 @@ const conjugacionTableTemplate7 = new HTMLTableTemplate("conjugacion-table7", [
       "",
     ],
     mappedHeaders: ["numero", "persona", "pronombre", "imperativo"],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarImperativo,
     maxRows: 8,
   },
 ]);
@@ -1512,39 +1651,41 @@ const conjugacionTableTemplate8 = new HTMLTableTemplate("conjugacion-table8", [
   {
     header: ["", "", "", "Infinitivo", "Gerundio"],
     mappedHeaders: [undefined, undefined, undefined, "infinitivo", "gerundio"],
-    parseRowValues: (rowNode, rowValues, metadata) => {},
+    parseRowValues: gestionarFormasNoPersonales,
     maxRows: 1,
   },
 ]);
 
-const conjugacionContentTemplate = new HTMLTagTemplate(
-  "conjugacion-article",
-  "article",
-  {},
-  new HTMLTemplateFSM("conjugacion-article-content", [
-    {
-      isRoot: true,
-      stateId: "conjugacion-header",
-      template: new HTMLTagTemplate("conjugacion-header", "header", {}),
-      nextStates: ["conjugacion-table"],
-    },
-    {
-      stateId: "conjugacion-table",
-      template: new AnyHTMLTemplate("conjugacion-tables", [
-        conjugacionTableTemplate1,
-        conjugacionTableTemplate2,
-        conjugacionTableTemplate3,
-        conjugacionTableTemplate4,
-        conjugacionTableTemplate5,
-        conjugacionTableTemplate6,
-        conjugacionTableTemplate7,
-        conjugacionTableTemplate8,
-      ]),
-      nextStates: [],
-    },
-  ]),
-  (key, value) => key === "id",
-  ["id"]
+const conjugacionContentTemplate = new HTMLSingleChildTempalte(
+  new HTMLTagTemplate(
+    "conjugacion-article",
+    "article",
+    {},
+    new HTMLTemplateFSM("conjugacion-article-content", [
+      {
+        isRoot: true,
+        stateId: "conjugacion-header",
+        template: new HTMLTagTemplate("conjugacion-header", "header", {}),
+        nextStates: ["conjugacion-table"],
+      },
+      {
+        stateId: "conjugacion-table",
+        template: new AnyHTMLTemplate("conjugacion-tables", [
+          conjugacionTableTemplate1,
+          conjugacionTableTemplate2,
+          conjugacionTableTemplate3,
+          conjugacionTableTemplate4,
+          conjugacionTableTemplate5,
+          conjugacionTableTemplate6,
+          conjugacionTableTemplate7,
+          conjugacionTableTemplate8,
+        ]),
+        nextStates: [],
+      },
+    ]),
+    (key, value) => key === "id",
+    ["id"]
+  )
 );
 
 const template = new HTMLTemplateFSM<{ word: string }>("root", [
@@ -1575,7 +1716,7 @@ const template = new HTMLTemplateFSM<{ word: string }>("root", [
       "div-conjugacion",
       "div",
       { id: "conjugacion" },
-      new HTMLSingleChildTempalte(conjugacionContentTemplate)
+      conjugacionContentTemplate
     ),
     nextStates: ["article", "conjugacion2", "sin-ant", "otras", "derechos"],
   },
@@ -1585,7 +1726,7 @@ const template = new HTMLTemplateFSM<{ word: string }>("root", [
       "div-conjugacion2",
       "div",
       { id: "conjugacion2" },
-      new SkipTemplate()
+      conjugacionContentTemplate
     ),
     nextStates: ["article", "sin-ant", "otras", "derechos"],
   },

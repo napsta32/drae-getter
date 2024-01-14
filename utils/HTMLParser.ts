@@ -370,8 +370,8 @@ export class HTMLTableTemplate<
     return i === this.content.length;
   }
 
-  private extractRowContents(elem: HTMLElement): string[] {
-    return elem.childNodes.map((child) => child.innerText);
+  private extractRowContents(elem: HTMLElement): Node[] {
+    return elem.childNodes;
   }
 
   parse(node: Node, metadata: Metadata): void {
