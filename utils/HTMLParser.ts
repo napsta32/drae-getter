@@ -557,7 +557,7 @@ export class HTMLTagTemplate extends HTMLNodeTemplate {
   }
 }
 
-export class HTMLSingleChildTempalte extends HTMLChildrenTemplate {
+export class HTMLSingleChildTemplate extends HTMLChildrenTemplate {
   childTemplate: HTMLNodeTemplate;
 
   constructor(childTemplate: HTMLNodeTemplate) {

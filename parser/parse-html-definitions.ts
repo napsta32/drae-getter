@@ -2,7 +2,7 @@ import { HTMLElement, parse, Node } from "node-html-parser";
 import { HTMLDefinitionsFileUtils } from "../utils/HTMLDefintionsFileUtils";
 import {
   AnyHTMLTemplate,
-  HTMLSingleChildTempalte,
+  HTMLSingleChildTemplate as HTMLSingleChildTemplate,
   HTMLTableTemplate,
   HTMLTagTemplate,
   HTMLTemplateFSM,
@@ -1656,7 +1656,7 @@ const conjugacionTableTemplate8 = new HTMLTableTemplate("conjugacion-table8", [
   },
 ]);
 
-const conjugacionContentTemplate = new HTMLSingleChildTempalte(
+const conjugacionContentTemplate = new HTMLSingleChildTemplate(
   new HTMLTagTemplate(
     "conjugacion-article",
     "article",
